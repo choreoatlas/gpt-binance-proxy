@@ -1,0 +1,106 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Binance Kline Proxy for GPT",
+    "version": "1.0.0",
+    "description": "Provide Binance spot klines (historical and latest) for trading analysis."
+  },
+  "servers": [
+    {
+      "url": "https://reddest-intactly-leda.ngrok-free.dev",
+      "description": "Public HTTPS endpoint that forwards to the local Node.js server."
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "Check service health",
+        "description": "Simple health check. Use this to verify the service is reachable before other calls.",
+        "responses": {
+          "200": {
+            "description": "Service is healthy"
+          }
+        }
+      }
+    },
+    "/v1/klines/history": {
+      "get": {
+        "operationId": "getHistoricalKlines",
+        "summary": "Get historical candlesticks from Binance spot",
+        "description": "Fetch historical klines from Binance spot REST API. Use this when you need a window of past candles for analysis.",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "description": "Trading pair symbol, e.g. BTCUSDT, ETHUSDT.",
+            "schema": {
+              "type": "string",
+              "default": "BTCUSDT"
+            }
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "required": false,
+            "description": "Kline interval. Common values: 1m, 5m, 15m, 1h, 4h, 1d.",
+            "schema": {
+              "type": "string",
+              "default": "1m"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Number of candles to return. Max 1000.",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historical klines returned"
+          }
+        }
+      }
+    },
+    "/v1/klines/latest": {
+      "get": {
+        "operationId": "getLatestKline",
+        "summary": "Get the latest spot kline (1 candle)",
+        "description": "Get the latest single kline for a symbol/interval. Uses WebSocket cache when available for near-real-time data, with REST fallback.",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "description": "Trading pair symbol, e.g. BTCUSDT, ETHUSDT.",
+            "schema": {
+              "type": "string",
+              "default": "BTCUSDT"
+            }
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "required": false,
+            "description": "Kline interval. Common values: 1m, 5m, 15m, 1h, 4h, 1d.",
+            "schema": {
+              "type": "string",
+              "default": "1m"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latest kline returned"
+          }
+        }
+      }
+    }
+  }
+}
