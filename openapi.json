@@ -16,10 +16,17 @@
       "get": {
         "operationId": "healthCheck",
         "summary": "Check service health",
-        "description": "Simple health check. Use this to verify the service is reachable before other calls.",
+        "description": "Call the /health path to verify the service is reachable before other requests.",
         "responses": {
           "200": {
-            "description": "Service is healthy"
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -34,7 +41,7 @@
             "name": "symbol",
             "in": "query",
             "required": false,
-            "description": "Trading pair symbol, e.g. BTCUSDT, ETHUSDT.",
+            "description": "Trading pair symbol, e.g. BTCUSDT or ETHUSDT.",
             "schema": {
               "type": "string",
               "default": "BTCUSDT"
@@ -54,16 +61,35 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "Number of candles to return. Max 1000.",
+            "description": "Number of candles to return.",
             "schema": {
               "type": "integer",
-              "default": 100
+              "default": 100,
+              "minimum": 1,
+              "maximum": 1000
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Historical klines returned"
+            "description": "Historical klines returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalKlinesResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to fetch historical klines",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -71,14 +97,14 @@
     "/v1/klines/latest": {
       "get": {
         "operationId": "getLatestKline",
-        "summary": "Get the latest spot kline (1 candle)",
-        "description": "Get the latest single kline for a symbol/interval. Uses WebSocket cache when available for near-real-time data, with REST fallback.",
+        "summary": "Get the latest spot kline",
+        "description": "Get the latest single kline for a symbol and interval. Uses WebSocket cache when available, with REST fallback.",
         "parameters": [
           {
             "name": "symbol",
             "in": "query",
             "required": false,
-            "description": "Trading pair symbol, e.g. BTCUSDT, ETHUSDT.",
+            "description": "Trading pair symbol, e.g. BTCUSDT or ETHUSDT.",
             "schema": {
               "type": "string",
               "default": "BTCUSDT"
@@ -97,7 +123,197 @@
         ],
         "responses": {
           "200": {
-            "description": "Latest kline returned"
+            "description": "Latest kline returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LatestKlineResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to fetch latest kline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "ts"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Whether the service is healthy."
+          },
+          "ts": {
+            "type": "integer",
+            "description": "Server timestamp in Unix milliseconds."
+          }
+        }
+      },
+      "Kline": {
+        "type": "object",
+        "required": [
+          "symbol",
+          "interval",
+          "openTime",
+          "closeTime",
+          "open",
+          "high",
+          "low",
+          "close",
+          "volume",
+          "isFinal"
+        ],
+        "properties": {
+          "symbol": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          },
+          "openTime": {
+            "type": "integer",
+            "description": "Kline open time in Unix milliseconds."
+          },
+          "closeTime": {
+            "type": "integer",
+            "description": "Kline close time in Unix milliseconds."
+          },
+          "open": {
+            "type": "string"
+          },
+          "high": {
+            "type": "string"
+          },
+          "low": {
+            "type": "string"
+          },
+          "close": {
+            "type": "string"
+          },
+          "volume": {
+            "type": "string"
+          },
+          "isFinal": {
+            "type": "boolean"
+          }
+        }
+      },
+      "HistoricalKlinesResponse": {
+        "type": "object",
+        "required": [
+          "symbol",
+          "interval",
+          "limit",
+          "raw"
+        ],
+        "properties": {
+          "symbol": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "raw": {
+            "type": "array",
+            "description": "Raw Binance kline rows. Each row is an array in Binance REST format.",
+            "items": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "LatestKlineResponse": {
+        "type": "object",
+        "required": [
+          "source",
+          "kline"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Either ws_cache or rest_fallback."
+          },
+          "kline": {
+            "$ref": "#/components/schemas/Kline"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error",
+          "detail"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "detail": {
+            "description": "Error detail from the upstream request or server.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  ]
+                }
+              }
+            ]
           }
         }
       }
