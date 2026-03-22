@@ -114,13 +114,14 @@ app.get("/v1/klines/latest", async (req, res) => {
     const kline = {
       symbol,
       interval,
-      openTime: k,
+      openTime: k[0],
       open: k[1],
-      high: k,
-      low: k,
-      close: k,
-      volume: k,
-      closeTime: k,
+      high: k[2],
+      low: k[3],
+      close: k[4],
+      volume: k[5],
+      closeTime: k[6],
+      isFinal: true,
     };
 
     res.json({
@@ -139,4 +140,3 @@ app.get("/v1/klines/latest", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);
 });
-
